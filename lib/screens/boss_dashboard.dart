@@ -77,7 +77,7 @@ class _BossDashboardState extends State<BossDashboard> {
         ),
         body: BossDashboardContent(companies: _companies, projects: _projects, ceos: _ceos),
       ),
-      AIChatScreen(),
+      AIChatScreen(isDarkTheme: true),
       NotificationsScreen(),
       SettingsScreen(),
     ];
