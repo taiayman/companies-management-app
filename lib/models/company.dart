@@ -8,7 +8,10 @@ class Company {
   final String ceoWhatsApp;
   final int employeeCount;
   final List<String> projects;
-  final String statusColor;
+  String statusColor;
+  final String imageUrl;
+  String issueTitle;
+  String issueDescription;
 
   Company({
     required this.id,
@@ -20,21 +23,27 @@ class Company {
     required this.ceoWhatsApp,
     required this.employeeCount,
     required this.projects,
-    required this.statusColor,
+    this.statusColor = 'green',
+    required this.imageUrl,
+    this.issueTitle = '',
+    this.issueDescription = '',
   });
 
   factory Company.fromMap(Map<String, dynamic> data) {
     return Company(
-      id: data['id'],
-      name: data['name'],
-      ceoId: data['ceoId'],
-      ceoName: data['ceoName'],
-      ceoEmail: data['ceoEmail'],
-      ceoPhone: data['ceoPhone'],
-      ceoWhatsApp: data['ceoWhatsApp'],
-      employeeCount: data['employeeCount'],
-      projects: List<String>.from(data['projects']),
-      statusColor: data['statusColor'],
+      id: data['id'] ?? '',
+      name: data['name'] ?? 'Unnamed Company',
+      ceoId: data['ceoId'] ?? '',
+      ceoName: data['ceoName'] ?? 'Unknown CEO',
+      ceoEmail: data['ceoEmail'] ?? '',
+      ceoPhone: data['ceoPhone'] ?? '',
+      ceoWhatsApp: data['ceoWhatsApp'] ?? '',
+      employeeCount: data['employeeCount'] ?? 0,
+      projects: List<String>.from(data['projects'] ?? []),
+      statusColor: data['statusColor'] ?? 'green',
+      imageUrl: data['imageUrl'] ?? 'https://via.placeholder.com/150',
+      issueTitle: data['issueTitle'] ?? '',
+      issueDescription: data['issueDescription'] ?? '',
     );
   }
 
@@ -50,6 +59,10 @@ class Company {
       'employeeCount': employeeCount,
       'projects': projects,
       'statusColor': statusColor,
+      'imageUrl': imageUrl,
+      'issueTitle': issueTitle,
+      'issueDescription': issueDescription,
     };
   }
 }
+

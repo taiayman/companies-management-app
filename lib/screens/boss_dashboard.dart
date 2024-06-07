@@ -1,3 +1,4 @@
+import 'package:business_management_app/screens/company_details_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:business_management_app/models/company.dart';
@@ -13,9 +14,17 @@ import 'package:business_management_app/screens/project_details_screen.dart';
 import 'package:business_management_app/screens/ai_chat_screen.dart';
 import 'package:business_management_app/screens/settings_screen.dart';
 import 'package:business_management_app/screens/notifications_screen.dart';
+import 'package:business_management_app/screens/ceo_profile_screen.dart';
 import 'package:business_management_app/models/user.dart' as AppUser;
+import 'package:business_management_app/services/notification_service.dart';
+import 'package:business_management_app/models/notification.dart' as CustomNotification;
+import 'package:charts_flutter/flutter.dart' as charts;
 
 class BossDashboard extends StatefulWidget {
+  final bool isDarkTheme;
+
+  BossDashboard({required this.isDarkTheme});
+
   @override
   _BossDashboardState createState() => _BossDashboardState();
 }
@@ -24,17 +33,22 @@ class _BossDashboardState extends State<BossDashboard> {
   final CompanyService _companyService = CompanyService();
   final ProjectService _projectService = ProjectService();
   final UserService _userService = UserService();
+  final NotificationService _notificationService = NotificationService();
   List<Company> _companies = [];
   List<Project> _projects = [];
   List<AppUser.User> _ceos = [];
+  bool _hasUnreadNotifications = false;
   int _selectedIndex = 0;
+  late bool _isDarkTheme;
 
   @override
   void initState() {
     super.initState();
+    _isDarkTheme = widget.isDarkTheme;
     _loadCompanies();
     _loadProjects();
     _loadCEOs();
+    _checkForUnreadNotifications();
   }
 
   Future<void> _loadCompanies() async {
@@ -45,7 +59,7 @@ class _BossDashboardState extends State<BossDashboard> {
   }
 
   Future<void> _loadProjects() async {
-    List<Project> projects = await _projectService.getLatestProjects();
+    List<Project> projects = await _projectService.getAllProjects();
     setState(() {
       _projects = projects;
     });
@@ -58,59 +72,133 @@ class _BossDashboardState extends State<BossDashboard> {
     });
   }
 
+  Future<void> _checkForUnreadNotifications() async {
+    List<CustomNotification.Notification> notifications = await _notificationService.getAllNotifications();
+    bool hasUnread = notifications.any((notification) => !notification.isRead);
+    setState(() {
+      _hasUnreadNotifications = hasUnread;
+    });
+  }
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
   }
 
+  void _handleNotificationsRead() {
+    setState(() {
+      _hasUnreadNotifications = false;
+    });
+  }
+
+  List<charts.Series<BudgetData, String>> _createChartData() {
+    final data = _projects.map((project) {
+      return BudgetData(project.name, project.budget.toInt(), Color(0xFFD97757));
+    }).toList();
+
+    return [
+      charts.Series<BudgetData, String>(
+        id: 'Budget',
+        colorFn: (BudgetData budget, _) => budget.color,
+        domainFn: (BudgetData budget, _) => budget.project,
+        measureFn: (BudgetData budget, _) => budget.budget,
+        data: data,
+      )
+    ];
+  }
+
   List<Widget> _widgetOptions() {
     return <Widget>[
       Scaffold(
         appBar: AppBar(
-          title: Text(
-            'Boss Dashboard',
-            style: GoogleFonts.rubik(fontSize: 20),
-          ),
+          title: Text('Boss Dashboard', style: GoogleFonts.nunito(color: Colors.white)),
           backgroundColor: Color(0xFFD97757),
-          automaticallyImplyLeading: false, // Remove the back button
+          automaticallyImplyLeading: false,
         ),
-        body: BossDashboardContent(companies: _companies, projects: _projects, ceos: _ceos),
+        body: BossDashboardContent(
+          companies: _companies,
+          projects: _projects,
+          ceos: _ceos,
+          isDarkTheme: _isDarkTheme,
+          budgetData: _createChartData(),
+        ),
+        backgroundColor: _isDarkTheme ? Color(0xFF2C2B28) : Color(0xFFF2F0E8),
       ),
-      AIChatScreen(isDarkTheme: true),
-      NotificationsScreen(),
-      SettingsScreen(),
+      AIChatScreen(isDarkTheme: _isDarkTheme),
+      NotificationsScreen(onNotificationsRead: _handleNotificationsRead, isDarkTheme: _isDarkTheme),
+      SettingsScreen(
+        onThemeChanged: () => setState(() => _isDarkTheme = !_isDarkTheme),
+        isDarkTheme: _isDarkTheme,
+      ),
     ];
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Color(0xFFF2F0E8), // Background color
-      body: _widgetOptions().elementAt(_selectedIndex),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat),
-            label: 'AI Chat',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
-            label: 'Notifications',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.amber[800],
-        unselectedItemColor: Colors.grey,
-        onTap: _onItemTapped,
+    return MaterialApp(
+      theme: ThemeData(
+        brightness: _isDarkTheme ? Brightness.dark : Brightness.light,
+        bottomNavigationBarTheme: BottomNavigationBarThemeData(
+          backgroundColor: _isDarkTheme ? Colors.black : Colors.white,
+          selectedItemColor: Color(0xFFD97757),
+          unselectedItemColor: Colors.grey,
+        ),
+      ),
+      home: Scaffold(
+        backgroundColor: _isDarkTheme ? Color(0xFF2C2B28) : Color(0xFFF2F0E8),
+        body: _widgetOptions().elementAt(_selectedIndex),
+        bottomNavigationBar: BottomNavigationBar(
+          items: <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.chat),
+              label: 'AI Chat',
+            ),
+            BottomNavigationBarItem(
+              icon: Stack(
+                children: [
+                  Icon(Icons.notifications),
+                  if (_hasUnreadNotifications)
+                    Positioned(
+                      right: 0,
+                      child: Container(
+                        padding: EdgeInsets.all(1),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        constraints: BoxConstraints(
+                          minWidth: 12,
+                          minHeight: 12,
+                        ),
+                        child: Text(
+                          '',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 8,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    )
+                ],
+              ),
+              label: 'Notifications',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.settings),
+              label: 'Settings',
+            ),
+          ],
+          currentIndex: _selectedIndex,
+          selectedItemColor: Color(0xFFD97757),
+          unselectedItemColor: Colors.grey,
+          onTap: _onItemTapped,
+        ),
       ),
     );
   }
@@ -120,122 +208,173 @@ class BossDashboardContent extends StatelessWidget {
   final List<Company> companies;
   final List<Project> projects;
   final List<AppUser.User> ceos;
+  final bool isDarkTheme;
+  final List<charts.Series<BudgetData, String>> budgetData;
 
   BossDashboardContent({
     required this.companies,
     required this.projects,
     required this.ceos,
+    required this.isDarkTheme,
+    required this.budgetData,
   });
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // My Companies section
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              'My Companies',
-              style: GoogleFonts.rubik(
-                  fontSize: 24, fontWeight: FontWeight.bold),
+    return Container(
+      color: isDarkTheme ? Color(0xFF2C2B28) : Color(0xFFF2F0E8),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                'My Companies',
+                style: GoogleFonts.nunito(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: isDarkTheme ? Colors.white : Colors.black,
+                ),
+              ),
             ),
-          ),
-          SizedBox(height: 16),
-          // Company carousel
-          CarouselSlider(
-            options: CarouselOptions(
-              height: 200.0,
-              viewportFraction: 0.8,
-              enlargeCenterPage: true,
-              enableInfiniteScroll: true,
-              scrollDirection: Axis.horizontal,
-              autoPlay: false, // Disable automatic sliding
-              autoPlayInterval: Duration(seconds: 3),
-              autoPlayAnimationDuration: Duration(milliseconds: 800),
+            SizedBox(height: 0),
+            CarouselSlider(
+              options: CarouselOptions(
+                height: 240.0,
+                viewportFraction: 0.8,
+                enlargeCenterPage: true,
+                enableInfiniteScroll: true,
+                scrollDirection: Axis.horizontal,
+                autoPlay: false,
+                autoPlayInterval: Duration(seconds: 3),
+                autoPlayAnimationDuration: Duration(milliseconds: 800),
+              ),
+              items: companies.map((company) {
+                return GestureDetector(
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CompanyDetailsScreen(companyId: company.id),
+      ),
+    );
+  },
+  child: CompanyCard(company: company, isDarkTheme: isDarkTheme),
+);
+              }).toList(),
             ),
-            items: companies.map((company) {
-              return GestureDetector(
-                onTap: () {
-                  Navigator.pushNamed(
-                    context,
-                    '/company_details',
-                    arguments: company.id,
-                  );
-                },
-                child: CompanyCard(company: company),
-              );
-            }).toList(),
-          ),
-          SizedBox(height: 32),
-          // Latest projects section
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              'Latest Projects',
-              style: GoogleFonts.rubik(
-                  fontSize: 24, fontWeight: FontWeight.bold),
+            SizedBox(height: 32),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                'Latest Projects',
+                style: GoogleFonts.nunito(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: isDarkTheme ? Colors.white : Colors.black,
+                ),
+              ),
             ),
-          ),
-          SizedBox(height: 16),
-          // Project carousel
-          CarouselSlider(
-            options: CarouselOptions(
-              height: 200.0,
-              viewportFraction: 0.8,
-              enlargeCenterPage: true,
-              enableInfiniteScroll: true,
-              scrollDirection: Axis.horizontal,
-              autoPlay: true,
-              autoPlayInterval: Duration(seconds: 3),
-              autoPlayAnimationDuration: Duration(milliseconds: 800),
+            SizedBox(height: 0),
+            CarouselSlider(
+              options: CarouselOptions(
+                height: 200.0,
+                viewportFraction: 0.8,
+                enlargeCenterPage: true,
+                enableInfiniteScroll: true,
+                scrollDirection: Axis.horizontal,
+                autoPlay: true,
+                autoPlayInterval: Duration(seconds: 3),
+                autoPlayAnimationDuration: Duration(milliseconds: 800),
+              ),
+              items: projects.map((project) {
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProjectDetailsScreen(project: project, isDarkTheme: isDarkTheme, isBoss: true),
+                      ),
+                    );
+                  },
+                  child: LatestProjectCard(project: project, isDarkTheme: isDarkTheme, isBoss: true),
+                );
+              }).toList(),
             ),
-            items: projects.map((project) {
-              return GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          ProjectDetailsScreen(project: project),
+            SizedBox(height: 32),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                'CEOs',
+                style: GoogleFonts.nunito(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: isDarkTheme ? Colors.white : Colors.black,
+                ),
+              ),
+            ),
+            SizedBox(height: 0),
+            Container(
+              height: 150,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: ceos.length,
+                itemBuilder: (context, index) {
+                  return Container(
+                    width: 120,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => CEOProfileScreen(ceo: ceos[index], isDarkTheme: isDarkTheme),
+                            ),
+                          );
+                        },
+                        child: CEOCard(user: ceos[index], isDarkTheme: isDarkTheme),
+                      ),
                     ),
                   );
                 },
-                child: LatestProjectCard(project: project),
-              );
-            }).toList(),
-          ),
-          SizedBox(height: 32),
-          // CEOs section
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              'CEOs',
-              style: GoogleFonts.rubik(
-                  fontSize: 24, fontWeight: FontWeight.bold),
+              ),
             ),
-          ),
-          SizedBox(height: 16),
-          // CEO list
-          Container(
-            height: 150, // Adjust height as needed
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: ceos.length,
-              itemBuilder: (context, index) {
-                return Container(
-                  width: 120, // Adjust width as needed
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: CEOCard(user: ceos[index]),
-                  ),
-                );
-              },
+            SizedBox(height: 32),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                'Budget Allocation',
+                style: GoogleFonts.nunito(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: isDarkTheme ? Colors.white : Colors.black,
+                ),
+              ),
             ),
-          ),
-        ],
+            Container(
+              height: 300,
+              padding: EdgeInsets.all(16.0),
+              child: charts.BarChart(
+                budgetData,
+                animate: true,
+                barGroupingType: charts.BarGroupingType.grouped,
+                animationDuration: Duration(seconds: 1),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
+}
+
+class BudgetData {
+  final String project;
+  final int budget;
+  final charts.Color color;
+
+  BudgetData(this.project, this.budget, Color color)
+      : this.color = charts.ColorUtil.fromDartColor(color);
 }
