@@ -61,7 +61,7 @@ class _AIChatScreenState extends State<AIChatScreen> {
       "content": "Context: Companies - ${firestoreData['companies']}, CEOs - ${firestoreData['ceos']}, Projects - ${firestoreData['projects']}"
     };
 
-    final apiKey = 'YOUR_API_KEY_HERE'; // Replace this with a secure method of fetching the API key
+    final apiKey = 'sk-proj-zuC8iJMN0OAjBE2fdrvST3BlbkFJg6uJPDSNJzbwkzyQ0mri'; // Replace this with a secure method of fetching the API key
     final url = 'https://api.openai.com/v1/chat/completions';
 
     final payload = {
