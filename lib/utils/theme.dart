@@ -5,10 +5,10 @@ ThemeData appTheme() {
     primarySwatch: Colors.blue,
     visualDensity: VisualDensity.adaptivePlatformDensity,
     textTheme: const TextTheme(
-      headline1: TextStyle(fontSize: 32.0, fontWeight: FontWeight.bold, color: Colors.black),
-      headline6: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold, color: Colors.black),
-      bodyText1: TextStyle(fontSize: 16.0, color: Colors.black),
-      bodyText2: TextStyle(fontSize: 14.0, color: Colors.black54),
+      headlineLarge: TextStyle(fontSize: 32.0, fontWeight: FontWeight.bold, color: Colors.black), // Updated from headline1
+      titleLarge: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold, color: Colors.black), // Updated from headline6
+      bodyLarge: TextStyle(fontSize: 16.0, color: Colors.black), // Updated from bodyText1
+      bodyMedium: TextStyle(fontSize: 14.0, color: Colors.black54), // Updated from bodyText2
     ),
     buttonTheme: const ButtonThemeData(
       buttonColor: Colors.blue,
@@ -32,3 +32,4 @@ ThemeData appTheme() {
     ),
   );
 }
+
