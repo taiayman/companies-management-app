@@ -38,7 +38,7 @@ class _ProjectFeedbackScreenState extends State<ProjectFeedbackScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: appTheme(widget.isDarkTheme).backgroundColor,
+      backgroundColor: appTheme(widget.isDarkTheme).colorScheme.background,
       appBar: AppBar(
         title: Text('Project Feedbacks'),
         backgroundColor: appTheme(widget.isDarkTheme).primaryColor,
@@ -61,3 +61,4 @@ class _ProjectFeedbackScreenState extends State<ProjectFeedbackScreen> {
           );
   }
 }
+
