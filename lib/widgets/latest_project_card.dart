@@ -1,4 +1,3 @@
-// latest_project_card.dart
 import 'package:flutter/material.dart';
 import 'package:business_management_app/models/project.dart';
 
@@ -29,7 +28,13 @@ class LatestProjectCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.only(bottom: 2.0), // Add padding at the bottom
         child: ListTile(
-          title: Text(project.name, style: Theme.of(context).textTheme.headline6),
+          title: Text(
+            project.name,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           subtitle: Text('Status: ${project.status}\nBudget: \$${project.budget}'),
           onTap: () {
             // Handle card tap
