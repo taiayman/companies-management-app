@@ -127,7 +127,7 @@ class _CEODashboardState extends State<CEODashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: appTheme(_isDarkTheme).backgroundColor,
+      backgroundColor: _isDarkTheme ? Color(0xFF2C2B28) : Color(0xFFF2F0E8),
      appBar: AppBar(
   title: Text(
     'CEO Dashboard',
