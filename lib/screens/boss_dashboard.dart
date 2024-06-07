@@ -18,7 +18,6 @@ import 'package:business_management_app/screens/ceo_profile_screen.dart';
 import 'package:business_management_app/models/user.dart' as AppUser;
 import 'package:business_management_app/services/notification_service.dart';
 import 'package:business_management_app/models/notification.dart' as CustomNotification;
-import 'package:charts_flutter/flutter.dart' as charts;
 
 class BossDashboard extends StatefulWidget {
   final bool isDarkTheme;
@@ -92,22 +91,6 @@ class _BossDashboardState extends State<BossDashboard> {
     });
   }
 
-  List<charts.Series<BudgetData, String>> _createChartData() {
-    final data = _projects.map((project) {
-      return BudgetData(project.name, project.budget.toInt(), Color(0xFFD97757));
-    }).toList();
-
-    return [
-      charts.Series<BudgetData, String>(
-        id: 'Budget',
-        colorFn: (BudgetData budget, _) => budget.color,
-        domainFn: (BudgetData budget, _) => budget.project,
-        measureFn: (BudgetData budget, _) => budget.budget,
-        data: data,
-      )
-    ];
-  }
-
   List<Widget> _widgetOptions() {
     return <Widget>[
       Scaffold(
@@ -121,7 +104,6 @@ class _BossDashboardState extends State<BossDashboard> {
           projects: _projects,
           ceos: _ceos,
           isDarkTheme: _isDarkTheme,
-          budgetData: _createChartData(),
         ),
         backgroundColor: _isDarkTheme ? Color(0xFF2C2B28) : Color(0xFFF2F0E8),
       ),
@@ -209,14 +191,12 @@ class BossDashboardContent extends StatelessWidget {
   final List<Project> projects;
   final List<AppUser.User> ceos;
   final bool isDarkTheme;
-  final List<charts.Series<BudgetData, String>> budgetData;
 
   BossDashboardContent({
     required this.companies,
     required this.projects,
     required this.ceos,
     required this.isDarkTheme,
-    required this.budgetData,
   });
 
   @override
@@ -252,16 +232,16 @@ class BossDashboardContent extends StatelessWidget {
               ),
               items: companies.map((company) {
                 return GestureDetector(
-  onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CompanyDetailsScreen(companyId: company.id),
-      ),
-    );
-  },
-  child: CompanyCard(company: company, isDarkTheme: isDarkTheme),
-);
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CompanyDetailsScreen(companyId: company.id),
+                      ),
+                    );
+                  },
+                  child: CompanyCard(company: company, isDarkTheme: isDarkTheme),
+                );
               }).toList(),
             ),
             SizedBox(height: 32),
@@ -341,40 +321,9 @@ class BossDashboardContent extends StatelessWidget {
                 },
               ),
             ),
-            SizedBox(height: 32),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                'Budget Allocation',
-                style: GoogleFonts.nunito(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: isDarkTheme ? Colors.white : Colors.black,
-                ),
-              ),
-            ),
-            Container(
-              height: 300,
-              padding: EdgeInsets.all(16.0),
-              child: charts.BarChart(
-                budgetData,
-                animate: true,
-                barGroupingType: charts.BarGroupingType.grouped,
-                animationDuration: Duration(seconds: 1),
-              ),
-            ),
           ],
         ),
       ),
     );
   }
-}
-
-class BudgetData {
-  final String project;
-  final int budget;
-  final charts.Color color;
-
-  BudgetData(this.project, this.budget, Color color)
-      : this.color = charts.ColorUtil.fromDartColor(color);
 }
